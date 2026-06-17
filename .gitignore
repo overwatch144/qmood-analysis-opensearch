@@ -1,0 +1,28 @@
+# Buyuk dosyalar
+ck-0.7.0-jar-with-dependencies.jar
+anomaly-detection/
+
+# CK Tool ham ciktilari (cok buyuk)
+metrics/*/method.csv
+metrics/*/field.csv
+metrics/*/variable.csv
+
+# LaTeX ara dosyalar
+*.aux
+*.log
+*.out
+*.toc
+*.bbl
+*.blg
+*.synctex.gz
+
+# PowerPoint gecici
+~$*.pptx
+
+# OS
+.DS_Store
+__pycache__/
+*.pyc
+
+# Claude
+.claude/

@@ -1,0 +1,361 @@
+\documentclass[conference]{IEEEtran}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{array}
+\usepackage{url}
+\usepackage{cite}
+\usepackage{float}
+\usepackage[hyphens]{xurl}
+\usepackage{hyperref}
+\usepackage{tabularx}
+\usepackage{adjustbox}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=black,
+    citecolor=black,
+    urlcolor=blue
+}
+
+\begin{document}
+
+\title{QMOOD Tabanl{\i} Yaz{\i}l{\i}m Kalitesi Analizi ve LLM Destekli De\u{g}erlendirme: OpenSearch Anomaly Detection \"Uzerine Ampirik Bir \c{C}al{\i}\c{s}ma}
+
+\author{
+\IEEEauthorblockN{Yaz{\i}l{\i}m Mimarileri ve Tasar{\i}m Y\"ontemleri Dersi --- D\"onem Projesi}
+}
+
+\maketitle
+
+\begin{abstract}
+Bu \c{c}al{\i}\c{s}mada, a\c{c}{\i}k kaynak kodlu OpenSearch Anomaly Detection projesinin 12 farkl{\i} s\"ur\"um\"u \"uzerinde QMOOD (Quality Model for Object-Oriented Design) modeli kullan{\i}larak sistematik bir yaz{\i}l{\i}m tasar{\i}m kalitesi analizi ger\c{c}ekle\c{s}tirilmi\c{s}tir. CK Tool arac{\i}l{\i}\u{g}{\i}yla \c{c}{\i}kar{\i}lan nesne y\"onelimli metriklerden (CBO, DIT, WMC, RFC, LCOM) 10 tasar{\i}m \"ozelli\u{g}i hesaplanm{\i}\c{s} ve Bansiya-Davis form\"ulleriyle 6 kalite niteli\u{g}i (Reusability, Flexibility, Understandability, Functionality, Extendibility, Effectiveness) elde edilmi\c{s}tir. S\"ur\"um bazl{\i} evrim analizi, projenin 288 s{\i}n{\i}ftan 609 s{\i}n{\i}fa b\"uy\"umesi s\"urecinde coupling'in monoton art{\i}\c{s} (\%22.1), encapsulation'{\i}n belirgin d\"u\c{s}\"u\c{s} (\%22.3) ve extendibility'nin s\"urekli k\"ot\"ule\c{s}me (\%26.6) g\"osterdi\u{g}ini ortaya koymu\c{s}tur. \"Ozellikle v2.16.0.0 s\"ur\"um\"u, 227 yeni s{\i}n{\i}f eklenmesiyle kritik bir k{\i}r{\i}lma noktas{\i} olarak tespit edilmi\c{s}tir. \c{C}al{\i}\c{s}man{\i}n ikinci a\c{s}amas{\i}nda, elde edilen metrik verileri ChatGPT (GPT-4), Google Gemini ve Claude olmak \"uzere \"u\c{c} farkl{\i} B\"uy\"uk Dil Modeli'ne (LLM) sunulmu\c{s} ve modellerin yaz{\i}l{\i}m kalitesi de\u{g}erlendirme yetenekleri kar\c{s}{\i}la\c{s}t{\i}r{\i}lm{\i}\c{s}t{\i}r.
+\end{abstract}
+
+\begin{IEEEkeywords}
+QMOOD, yaz{\i}l{\i}m kalitesi, nesne y\"onelimli metrikler, yaz{\i}l{\i}m evrimi, teknik bor\c{c}, b\"uy\"uk dil modelleri, CK metrikleri, OpenSearch
+\end{IEEEkeywords}
+
+%==============================================================
+\section{Giri\c{s}}
+
+Yaz{\i}l{\i}m sistemleri, ya\c{s}am d\"ong\"uleri boyunca s\"urekli de\u{g}i\c{s}ime u\u{g}ramakta ve bu de\u{g}i\c{s}imler tasar{\i}m kalitesini do\u{g}rudan etkilemektedir. Lehman'{\i}n yaz{\i}l{\i}m evrimi yasalar{\i}na g\"ore \cite{lehman1996}, bir yaz{\i}l{\i}m sistemi \c{c}evresine uyum sa\u{g}lamak i\c{c}in s\"urekli de\u{g}i\c{s}tirilmeli, ancak bu de\u{g}i\c{s}iklikler kontrol edilmedi\u{g}inde yap{\i}sal bozulmaya (architectural erosion) yol a\c{c}maktad{\i}r.
+
+QMOOD (Quality Model for Object-Oriented Design), Bansiya ve Davis \cite{bansiya2002} taraf{\i}ndan \"onerilen ve nesne y\"onelimli tasar{\i}m kalitesini hiyerar\c{s}ik bir yap{\i}da de\u{g}erlendiren bir modeldir. Son y{\i}llarda B\"uy\"uk Dil Modelleri (LLM), yaz{\i}l{\i}m m\"uhendisli\u{g}inde kod inceleme, hata tespiti ve kalite de\u{g}erlendirme gibi alanlarda kullan{\i}lmaya ba\c{s}lanm{\i}\c{s}t{\i}r \cite{fan2023}.
+
+Bu \c{c}al{\i}\c{s}mada, OpenSearch Anomaly Detection projesinin 12 s\"ur\"um\"u QMOOD modeli ile analiz edilmi\c{s} ve sonu\c{c}lar \"u\c{c} farkl{\i} LLM ile de\u{g}erlendirilmi\c{s}tir. \c{C}al{\i}\c{s}man{\i}n katk{\i}lar{\i}:
+
+\begin{itemize}
+\item End\"ustriyel \"ol\c{c}ekte bir Java projesinin 12 s\"ur\"uml\"uk QMOOD evrim analizi ger\c{c}ekle\c{s}tirilmi\c{s}tir.
+\item B\"uy\"uk \"ol\c{c}ekli kod eklenmesinin (v2.16) tasar{\i}m kalitesine etkisi ampirik olarak g\"osterilmi\c{s}tir.
+\item \"U\c{c} farkl{\i} LLM'in metrik tabanl{\i} kalite de\u{g}erlendirme yetenekleri kar\c{s}{\i}la\c{s}t{\i}r{\i}lm{\i}\c{s}t{\i}r.
+\item Prompt m\"uhendisli\u{g}inin LLM \c{c}{\i}kt{\i} kalitesine etkisi incelenmi\c{s}tir.
+\end{itemize}
+
+%==============================================================
+\section{Literat\"ur \"Ozeti}
+
+\subsection{QMOOD Modeli}
+QMOOD, Bansiya ve Davis \cite{bansiya2002} taraf{\i}ndan 2002 y{\i}l{\i}nda \"onerilen, nesne y\"onelimli yaz{\i}l{\i}m sistemlerinin tasar{\i}m kalitesini hiyerar\c{s}ik olarak de\u{g}erlendiren bir modeldir. Model \"u\c{c} katmandan olu\c{s}ur: (1) nesne y\"onelimli metrikler (CBO, DIT, WMC, RFC, LCOM, NOM, NOA), (2) 10 tasar{\i}m \"ozelli\u{g}i (Abstraction, Encapsulation, Coupling, Cohesion, Complexity, Design Size, Messaging, Composition, Inheritance, Polymorphism), (3) 6 kalite niteli\u{g}i (Reusability, Flexibility, Understandability, Functionality, Extendibility, Effectiveness). Model, ISO/IEC 9126 standard{\i}yla uyumludur \cite{iso9126}.
+
+\subsection{Chidamber-Kemerer Metrik Seti}
+CK \cite{chidamber1994} metrik seti, nesne y\"onelimli yaz{\i}l{\i}mlar i\c{c}in en yayg{\i}n kabul g\"orm\"u\c{s} metrik k\"umesidir. CBO (Coupling Between Objects), DIT (Depth of Inheritance Tree), WMC (Weighted Methods per Class), RFC (Response for a Class), LCOM (Lack of Cohesion of Methods) ve NOC (Number of Children) metriklerini i\c{c}erir.
+
+\subsection{Yaz{\i}l{\i}m Evrimi ve Teknik Bor\c{c}}
+Lehman \cite{lehman1996} yaz{\i}l{\i}m evrimini y\"oneten sekiz yasa tan{\i}mlam{\i}\c{s}t{\i}r. Cunningham \cite{cunningham1992} taraf{\i}ndan ortaya at{\i}lan ``teknik bor\c{c}'' metaforu, k{\i}sa vadeli tasar{\i}m tavizlerinin uzun vadede bak{\i}m maliyetlerini art{\i}rd{\i}\u{g}{\i}n{\i} belirtir.
+
+\subsection{LLM Destekli Yaz{\i}l{\i}m M\"uhendisli\u{g}i}
+Fan vd. \cite{fan2023} ve Hou vd. \cite{hou2024}, LLM'lerin yaz{\i}l{\i}m m\"uhendisli\u{g}i g\"orevlerindeki ba\c{s}ar{\i}lar{\i}n{\i} ve s{\i}n{\i}rl{\i}l{\i}klar{\i}n{\i} kapsaml{\i} bi\c{c}imde incelemi\c{s}tir. Al Dallal \cite{aldallal2013}, Padhy vd. \cite{padhy2018} ve Singh ve Malhotra \cite{singh2022} QMOOD modelini ampirik olarak do\u{g}rulam{\i}\c{s}t{\i}r.
+
+%==============================================================
+\section{Y\"ontem}
+
+\subsection{Analiz Edilen Sistem}
+OpenSearch Anomaly Detection, Amazon OpenSearch platformu \"uzerinde \c{c}al{\i}\c{s}an, zaman serisi verilerinde anomali tespiti yapan a\c{c}{\i}k kaynak kodlu bir Java eklentisidir. 70'ten fazla release tag'i ile geni\c{s} bir evrim s\"urecine sahiptir.
+
+\subsection{S\"ur\"um Se\c{c}im Stratejisi}
+Kalite de\u{g}i\c{s}imlerinin belirgin bi\c{c}imde g\"ozlemlenmesi amac{\i}yla b\"uy\"uk s{\i}\c{c}ramalar i\c{c}eren 12 s\"ur\"um se\c{c}ilmi\c{s}tir (Tablo~\ref{tab:versions}).
+
+\begin{table}[htbp]
+\caption{Analiz Edilen S\"ur\"umler ve Boyut Metrikleri}
+\label{tab:versions}
+\centering
+\begin{adjustbox}{max width=\columnwidth}
+\begin{tabular}{clccc}
+\toprule
+\# & S\"ur\"um & S{\i}n{\i}f & Java Dosya & LOC \\
+\midrule
+1 & 1.0.0.0 & 288 & 255 & 16{,}903 \\
+2 & 1.1.0.0 & 327 & 287 & 23{,}354 \\
+3 & 1.3.0.0 & 351 & 307 & 26{,}338 \\
+4 & 2.0.0.0 & 351 & 307 & 26{,}363 \\
+5 & 2.2.0.0 & 356 & 312 & 26{,}604 \\
+6 & 2.4.0.0 & 356 & 312 & 26{,}610 \\
+7 & 2.7.0.0 & 362 & 318 & 26{,}932 \\
+8 & 2.10.0.0 & 362 & 318 & 26{,}930 \\
+9 & 2.13.0.0 & 364 & 320 & 27{,}041 \\
+10 & 2.16.0.0 & 591 & 534 & 34{,}392 \\
+11 & 2.19.0.0 & 609 & 550 & 35{,}613 \\
+12 & 3.0.0.0 & 609 & 550 & 35{,}612 \\
+\bottomrule
+\end{tabular}
+\end{adjustbox}
+\end{table}
+
+\subsection{Metrik \c{C}{\i}kar{\i}m Arac{\i}}
+Metrik \c{c}{\i}kar{\i}m{\i}nda CK Tool (v0.7.0) \cite{aniche2015} kullan{\i}lm{\i}\c{s}t{\i}r. Her s\"ur\"um i\c{c}in \texttt{src/main/java} dizini analiz edilmi\c{s}, test kodlar{\i} kapsam d{\i}\c{s}{\i}nda b{\i}rak{\i}lm{\i}\c{s}t{\i}r.
+
+\subsection{QMOOD Tasar{\i}m \"Ozelliklerinin Hesaplanmas{\i}}
+CK Tool \c{c}{\i}kt{\i}lar{\i}ndan QMOOD tasar{\i}m \"ozellikleri Tablo~\ref{tab:mapping}'deki e\c{s}lemelerle hesaplanm{\i}\c{s}t{\i}r.
+
+\begin{table}[htbp]
+\caption{CK Tool Metriklerinden QMOOD E\c{s}lemeleri}
+\label{tab:mapping}
+\centering
+\begin{adjustbox}{max width=\columnwidth}
+\begin{tabular}{llll}
+\toprule
+\"Ozellik & K{\i}salt. & CK E\c{s}lemesi & Hesaplama \\
+\midrule
+Design Size & DSC & -- & Toplam s{\i}n{\i}f say{\i}s{\i} \\
+Abstraction & ANA & abstractMethodsQty & $\mu$(abs/total) \\
+Encapsulation & DAM & privateFieldsQty & $\mu$(priv/total) \\
+Coupling & DCC & cbo & $\mu$(CBO) \\
+Cohesion & CAM & tcc & $\mu$(TCC) \\
+Composition & MOA & totalFieldsQty & $\mu$(fields$-$static) \\
+Inheritance & MFA & dit & $P$(DIT$>$0) \\
+Polymorphism & NOP & abstractMethodsQty & $\mu$(abs)+$P$(DIT$>$0) \\
+Messaging & CIS & publicMethodsQty & $\mu$(publicMethods) \\
+Complexity & NOM & wmc & $\mu$(WMC) \\
+\bottomrule
+\end{tabular}
+\end{adjustbox}
+\end{table}
+
+\subsection{QMOOD Kalite Niteliklerinin Hesaplanmas{\i}}
+Kalite nitelikleri, Bansiya ve Davis \cite{bansiya2002} taraf{\i}ndan tan{\i}mlanan do\u{g}rusal form\"uller kullan{\i}larak hesaplanm{\i}\c{s}t{\i}r. DSC de\u{g}eri $\log_2$ d\"on\"u\c{s}\"um\"uyle normalize edilmi\c{s}tir.
+
+\begin{itemize}
+\item Reusability $= -0.25 \times DCC + 0.25 \times CAM + 0.5 \times CIS + 0.5 \times DSC^*$
+\item Flexibility $= 0.25 \times DAM - 0.25 \times DCC + 0.5 \times MOA + 0.5 \times NOP$
+\item Understandability $= -0.33 \times ANA + 0.33 \times DAM - 0.33 \times DCC + 0.33 \times CAM - 0.33 \times NOP - 0.33 \times NOM - 0.33 \times DSC^*$
+\item Functionality $= 0.12 \times CAM + 0.22 \times NOP + 0.22 \times CIS + 0.22 \times DSC^* + 0.22 \times ANA$
+\item Extendibility $= 0.5 \times ANA - 0.5 \times DCC + 0.5 \times MFA + 0.5 \times NOP$
+\item Effectiveness $= 0.2 \times ANA + 0.2 \times DAM + 0.2 \times MOA + 0.2 \times MFA + 0.2 \times NOP$
+\end{itemize}
+\noindent \textit{$DSC^* = \log_2(DSC + 1)$}
+
+\subsection{LLM Destekli De\u{g}erlendirme}
+\"U\c{c} farkl{\i} LLM modeli kullan{\i}lm{\i}\c{s}t{\i}r: ChatGPT (GPT-4), Google Gemini ve Claude (Anthropic). Her modele standart bir prompt ile ham metrikler, tasar{\i}m \"ozellikleri, kalite nitelikleri ve delta verileri sunulmu\c{s}tur. Modellerden be\c{s} farkl{\i} analiz istenmi\c{s}tir: genel kalite de\u{g}erlendirmesi, bak{\i}m yap{\i}labilirlik analizi, teknik bor\c{c} tahmini, refactoring \"onerileri ve mimari kalite yorumlar{\i}.
+
+%==============================================================
+\section{Analiz S\"ureci}
+
+\subsection{Ham Metrik Sonu\c{c}lar{\i}}
+Tablo~\ref{tab:rawmetrics}, 12 s\"ur\"ume ait ortalama CK metrik de\u{g}erlerini g\"ostermektedir.
+
+\begin{table}[htbp]
+\caption{S\"ur\"um Bazl{\i} Ortalama CK Metrik De\u{g}erleri}
+\label{tab:rawmetrics}
+\centering
+\begin{adjustbox}{max width=\columnwidth}
+\begin{tabular}{lccccccc}
+\toprule
+S\"ur\"um & S{\i}n{\i}f & $\mu$CBO & $\mu$DIT & $\mu$WMC & $\mu$RFC & $\mu$LCOM & $\Sigma$LOC \\
+\midrule
+1.0.0.0 & 288 & 8.58 & 1.58 & 11.69 & 16.16 & 13.89 & 16903 \\
+1.1.0.0 & 327 & 9.24 & 1.62 & 14.75 & 19.05 & 27.19 & 23354 \\
+1.3.0.0 & 351 & 9.61 & 1.63 & 15.48 & 19.90 & 26.50 & 26338 \\
+2.0.0.0 & 351 & 9.62 & 1.63 & 15.49 & 19.91 & 26.50 & 26363 \\
+2.2.0.0 & 356 & 9.67 & 1.64 & 15.42 & 19.91 & 26.54 & 26604 \\
+2.4.0.0 & 356 & 9.67 & 1.64 & 15.43 & 19.91 & 26.54 & 26610 \\
+2.7.0.0 & 362 & 9.75 & 1.63 & 15.32 & 19.79 & 26.46 & 26932 \\
+2.10.0.0 & 362 & 9.75 & 1.63 & 15.33 & 19.83 & 26.49 & 26930 \\
+2.13.0.0 & 364 & 9.78 & 1.63 & 15.30 & 19.77 & 26.43 & 27041 \\
+2.16.0.0 & 591 & 10.48 & 1.76 & 12.02 & 15.41 & 18.14 & 34392 \\
+2.19.0.0 & 609 & 10.47 & 1.75 & 12.16 & 15.50 & 18.57 & 35613 \\
+3.0.0.0 & 609 & 10.47 & 1.75 & 12.16 & 15.52 & 18.57 & 35612 \\
+\bottomrule
+\end{tabular}
+\end{adjustbox}
+\end{table}
+
+Veriler \"u\c{c} belirgin d\"onemi ortaya koymaktad{\i}r: (1) \textbf{H{\i}zl{\i} B\"uy\"ume} (v1.0--v1.3): S{\i}n{\i}f say{\i}s{\i} \%21.9 artm{\i}\c{s}, LCOM iki kat{\i}na \c{c}{\i}km{\i}\c{s}t{\i}r. (2) \textbf{Stabil Evrim} (v2.0--v2.13): S{\i}n{\i}f say{\i}s{\i} yaln{\i}zca \%3.7 artm{\i}\c{s}t{\i}r. (3) \textbf{Yap{\i}sal D\"on\"u\c{s}\"um} (v2.16--v3.0): S{\i}n{\i}f say{\i}s{\i} \%62.4 artm{\i}\c{s}, ortalama WMC d\"u\c{s}m\"u\c{s}t\"ur.
+
+%==============================================================
+\section{Sonu\c{c}lar}
+
+\subsection{Kalite Nitelikleri}
+Tablo~\ref{tab:quality}, 12 s\"ur\"um\"un QMOOD kalite nitelik de\u{g}erlerini sunmaktad{\i}r.
+
+\begin{table}[htbp]
+\caption{QMOOD Kalite Nitelikleri}
+\label{tab:quality}
+\centering
+\begin{adjustbox}{max width=\columnwidth}
+\begin{tabular}{lcccccc}
+\toprule
+S\"ur\"um & Reus. & Flex. & Underst. & Func. & Extend. & Effect. \\
+\midrule
+1.0.0.0 & 4.147 & 0.040 & $-$9.572 & 2.988 & $-$3.286 & 1.132 \\
+1.1.0.0 & 4.401 & $-$0.041 & $-$10.860 & 3.177 & $-$3.606 & 1.167 \\
+1.3.0.0 & 4.409 & $-$0.099 & $-$11.256 & 3.221 & $-$3.791 & 1.180 \\
+2.0.0.0 & 4.406 & $-$0.097 & $-$11.265 & 3.222 & $-$3.800 & 1.182 \\
+2.2.0.0 & 4.393 & $-$0.114 & $-$11.267 & 3.222 & $-$3.823 & 1.181 \\
+2.4.0.0 & 4.393 & $-$0.114 & $-$11.270 & 3.222 & $-$3.823 & 1.181 \\
+2.7.0.0 & 4.369 & $-$0.112 & $-$11.267 & 3.220 & $-$3.864 & 1.190 \\
+2.10.0.0 & 4.369 & $-$0.111 & $-$11.268 & 3.220 & $-$3.862 & 1.190 \\
+2.13.0.0 & 4.361 & $-$0.125 & $-$11.272 & 3.220 & $-$3.878 & 1.187 \\
+2.16.0.0 & 4.060 & $-$0.605 & $-$10.744 & 3.192 & $-$4.163 & 1.054 \\
+2.19.0.0 & 4.093 & $-$0.617 & $-$10.797 & 3.204 & $-$4.159 & 1.047 \\
+3.0.0.0 & 4.093 & $-$0.617 & $-$10.798 & 3.204 & $-$4.159 & 1.047 \\
+\bottomrule
+\end{tabular}
+\end{adjustbox}
+\end{table}
+
+\subsection{Kalite Niteliklerinin Evrimi}
+
+\textbf{Reusability:} v1.0'dan v1.3'e art{\i}\c{s} (4.147 $\rightarrow$ 4.409), v2.16'da belirgin d\"u\c{s}\"u\c{s} (4.361 $\rightarrow$ 4.060).
+
+\textbf{Flexibility:} v1.0'da pozitif olan tek kalite niteli\u{g}idir (0.040). v2.16'da sert d\"u\c{s}\"u\c{s} ($-$0.125 $\rightarrow$ $-$0.605).
+
+\textbf{Understandability:} T\"um s\"ur\"umlerde negatif; ilgin\c{c} bi\c{c}imde v2.16'da k{\i}smi iyile\c{s}me ($-$11.272 $\rightarrow$ $-$10.744), yeni basit s{\i}n{\i}flar{\i}n ortalamay{\i} d\"u\c{s}\"urmesi nedeniyle.
+
+\textbf{Functionality:} En stabil nitelik; 2.988--3.222 aral{\i}\u{g}{\i}nda.
+
+\textbf{Extendibility:} S\"urekli k\"ot\"ule\c{s}en trend ($-$3.286 $\rightarrow$ $-$4.159, \%26.6 d\"u\c{s}\"u\c{s}). En kritik kalite sorunu.
+
+\textbf{Effectiveness:} Nispeten stabil (1.047--1.190). v2.16'da DAM d\"u\c{s}\"u\c{s}\"uyle azalma.
+
+\subsection{Teknik Bor\c{c} G\"ostergeleri}
+\begin{itemize}
+\item Y\"uksek LCOM (ort. 18--27): SRP ihlalleri yayg{\i}n.
+\item Max CBO = 217: God Class anti-pattern'i mevcut.
+\item Max WMC = 318: A\c{s}{\i}r{\i} karma\c{s}{\i}k s{\i}n{\i}flar.
+\item Max DIT = 7 (sabit): Kal{\i}t{\i}m hiyerar\c{s}isi kontrol alt{\i}nda.
+\end{itemize}
+
+\subsection{S\"ur\"umler Aras{\i} Delta Analizi}
+En b\"uy\"uk kalite de\u{g}i\c{s}imleri: v1.0$\rightarrow$v1.1'de Understandability $-$1.288 (h{\i}zl{\i} b\"uy\"ume), v2.13$\rightarrow$v2.16'da Flexibility $-$0.479 (227 yeni s{\i}n{\i}f), Extendibility $-$0.285 (DCC s{\i}\c{c}ramas{\i}), Understandability $+$0.529 (d\"u\c{s}\"uk NOM'lu yeni s{\i}n{\i}flar).
+
+%==============================================================
+\section{Tart{\i}\c{s}ma}
+
+\subsection{LLM De\u{g}erlendirme Sonu\c{c}lar{\i}}
+\"U\c{c} farkl{\i} LLM modeline ayn{\i} standart prompt ve metrik verileri sunulmu\c{s}tur.
+
+\subsubsection{ChatGPT (GPT-4)}
+ChatGPT, projenin evrimini iki d\"onem olarak tan{\i}mlam{\i}\c{s}t{\i}r: organik b\"uy\"ume (v1.0--v2.13) ve kapsaml{\i} yeniden yap{\i}lanma (v2.16+). v2.16'y{\i} ``teknik borcun t\"ur\"un\"un de\u{g}i\c{s}ti\u{g}i'' bir s\"ur\"um olarak tespit etmi\c{s}tir --- monolitik karma\c{s}{\i}kl{\i}k borcu azal{\i}rken entegrasyon borcu artm{\i}\c{s}t{\i}r. Refactoring olarak Facade, Mediator, Event-Driven mekanizmalar ve DDD prensiplerini \"onermi\c{s}tir. Mevcut en b\"uy\"uk mimari riskin ``y\"uksek coupling'' oldu\u{g}unu vurgulam{\i}\c{s}t{\i}r.
+
+\subsubsection{Google Gemini}
+Gemini, en ele\c{s}tirel analizi sunmu\c{s}tur. Projenin ``kat{\i}la\c{s}maya (rigid) ba\c{s}lad{\i}\u{g}{\i}n{\i}'', v3.0 ge\c{c}i\c{s}inin ``pazarlama odakl{\i}'' oldu\u{g}unu \"one s\"urm\"u\c{s}t\"ur. Max\_CBO=214'\"u ``devasa bir tasar{\i}m borcu'' olarak tan{\i}mlam{\i}\c{s}, gelecekte \"ozellik ekleme maliyetinin ``eksponansiyel olarak artaca\u{g}{\i}n{\i}'' \"ong\"orm\"u\c{s}t\"ur. En \c{c}arp{\i}c{\i} tespiti: projenin ``b\"uy\"uk \c{c}amur topu (Big Ball of Mud) evresinden, da\u{g}{\i}t{\i}lm{\i}\c{s} ama birbirine dolanm{\i}\c{s} (Distributed Spaghetti) bir evreye'' ge\c{c}ti\u{g}idir. Hexagonal/Clean Architecture \"onermi\c{s}tir.
+
+\subsubsection{Claude (Anthropic)}
+Claude, en sistematik ve yap{\i}sal analizi sunmu\c{s}tur. ``\.{I}ki belirgin evreye ayr{\i}lan bir geli\c{s}im'' tespit etmi\c{s}tir. v2.16'da LCOM d\"u\c{s}\"u\c{s}\"un\"un ``biriken borcun \"odenmesinden \c{c}ok, yeni d\"u\c{s}\"uk-LCOM s{\i}n{\i}flar{\i}n ortalamay{\i} a\c{s}a\u{g}{\i} \c{c}ekmesinden'' kaynakland{\i}\u{g}{\i}n{\i}, ``eski s{\i}n{\i}flardaki kohezyon sorununun yerinde durdu\u{g}unu'' tespit etmi\c{s}tir. v2.19--v3.0 stabilitesini ``mimari donma noktas{\i}'' olarak yorumlam{\i}\c{s}t{\i}r.
+
+\subsection{LLM Kar\c{s}{\i}la\c{s}t{\i}rmas{\i}}
+Tablo~\ref{tab:llm}, \"u\c{c} modelin kar\c{s}{\i}la\c{s}t{\i}rmal{\i} de\u{g}erlendirmesini sunmaktad{\i}r.
+
+\begin{table}[htbp]
+\caption{LLM Modellerinin Kar\c{s}{\i}la\c{s}t{\i}rmas{\i}}
+\label{tab:llm}
+\centering
+\begin{adjustbox}{max width=\columnwidth}
+\begin{tabular}{p{2.2cm}p{1.8cm}p{1.8cm}p{1.8cm}}
+\toprule
+Alan & ChatGPT & Gemini & Claude \\
+\midrule
+Yakla\c{s}{\i}m & Dengeli, pratik & Ele\c{s}tirel, risk odakl{\i} & Sistematik, nicel \\
+v2.16 yorumu & Bor\c{c} t\"ur\"u de\u{g}i\c{s}mi\c{s} & Kat{\i}la\c{s}ma & Paradoksal iyile\c{s}me \\
+Teknik bor\c{c} & Orta & Y\"uksek & Orta-Y\"uksek \\
+Refactoring & DDD, Facade & Hexagonal Arch. & SRP, Composition \\
+v3.0 yorumu & Kararl{\i} durum & \.{I}novasyon kayb{\i} & Donma noktas{\i} \\
+Mimari tan{\i} & \.{I}yi ayr{\i}\c{s}m{\i}\c{s} ama s{\i}k{\i} entegre & Big Ball of Mud $\rightarrow$ Distr. Spaghetti & Organik b\"uy\"ume $\rightarrow$ d\"on\"u\c{s}\"um \\
+\bottomrule
+\end{tabular}
+\end{adjustbox}
+\end{table}
+
+\textbf{Ortak bulgular:} \"U\c{c} model de (1) coupling art{\i}\c{s}{\i}n{\i} en kritik risk olarak tan{\i}mlam{\i}\c{s}, (2) v2.16'y{\i} k{\i}r{\i}lma noktas{\i} olarak nitelendirmi\c{s}, (3) LCOM art{\i}\c{s}{\i}n{\i}n SRP ihlallerine i\c{s}aret etti\u{g}ini belirtmi\c{s}, (4) v2.16'da eklenen s{\i}n{\i}flar{\i}n daha basit oldu\u{g}unu tespit etmi\c{s}, (5) God Class ayr{\i}\c{s}t{\i}rmas{\i}n{\i} \"oncelikli refactoring olarak belirlemi\c{s}tir.
+
+\textbf{Farkl{\i}l{\i}klar:} ChatGPT iyimser ve uygulama odakl{\i}; Gemini en ele\c{s}tirel (``inovasyon kayb{\i}''); Claude akademik ve metrik temelli. Teknik bor\c{c} \c{s}iddeti konusunda tutars{\i}zl{\i}k g\"ozlenmi\c{s}tir (ChatGPT: orta, Claude: orta-y\"uksek, Gemini: y\"uksek).
+
+\subsection{Ele\c{s}tirel De\u{g}erlendirme}
+LLM \c{c}{\i}kt{\i}lar{\i} genel olarak metrik bulgular{\i}yla tutarl{\i}d{\i}r. Ancak: (1) ba\u{g}lam eksikli\u{g}i nedeniyle refactoring \"onerileri genel kalm{\i}\c{s}t{\i}r, (2) teknik bor\c{c} \c{s}iddetinde tutars{\i}zl{\i}k g\"ozlenmi\c{s}tir, (3) LLM'ler proje ba\u{g}lam{\i}ndan ba\u{g}{\i}ms{\i}z ``standart re\c{c}eteler'' \"uretme e\u{g}ilimindedir, (4) Gemini'nin ``pazarlama odakl{\i}'' ve Claude'un ``bilin\c{c}li tasar{\i}m karar{\i}'' tespitleri spek\"ulatiftir.
+
+\subsection{Ge\c{c}erlilik Tehditleri}
+\textbf{\.{I}\c{c} ge\c{c}erlilik:} CK Tool d{\i}\c{s}{\i}nda \c{c}apraz do\u{g}rulama yap{\i}lmam{\i}\c{s}t{\i}r. \textbf{D{\i}\c{s} ge\c{c}erlilik:} Bulgular tek projeye dayanmaktad{\i}r. \textbf{Yap{\i} ge\c{c}erlili\u{g}i:} Baz{\i} QMOOD \"ozelliklerinin proxy metriklerle hesaplanmas{\i} etkili olabilir. \textbf{LLM tekrarlanabilirli\u{g}i:} Ayn{\i} prompt ile farkl{\i} yan{\i}tlar \"uretilebilir.
+
+%==============================================================
+\section{Sonu\c{c} ve Gelecek \c{C}al{\i}\c{s}malar}
+
+Bu \c{c}al{\i}\c{s}mada, OpenSearch Anomaly Detection projesinin 12 s\"ur\"um\"u QMOOD modeli kullan{\i}larak analiz edilmi\c{s} ve \"u\c{c} farkl{\i} LLM ile de\u{g}erlendirilmi\c{s}tir. Temel bulgular:
+
+\begin{enumerate}
+\item \textbf{Yaz{\i}l{\i}m b\"uy\"umesi kaliteyi etkiler.} Proje, 288 s{\i}n{\i}ftan 609 s{\i}n{\i}fa (\%111 art{\i}\c{s}) b\"uy\"um\"u\c{s}; reusability \%1.3, flexibility \%1644, extendibility \%26.6 d\"u\c{s}\"u\c{s} g\"ostermi\c{s}tir.
+
+\item \textbf{Coupling en kritik kalite sorunudur.} CBO'nun monoton art{\i}\c{s}{\i} (8.58 $\rightarrow$ 10.47, \%22.1), extendibility, flexibility ve reusability niteliklerini do\u{g}rudan olumsuz etkilemektedir.
+
+\item \textbf{v2.16 yap{\i}sal bir k{\i}r{\i}lma noktas{\i}d{\i}r.} 227 yeni s{\i}n{\i}f eklenmi\c{s}, WMC d\"u\c{s}erken DAM \%22.0 azalm{\i}\c{s}t{\i}r.
+
+\item \textbf{LLM'ler metrik tabanl{\i} kalite de\u{g}erlendirmesinde kullan{\i}\c{s}l{\i}d{\i}r.} \"U\c{c} model de s\"ur\"um trendlerini do\u{g}ru yorumlam{\i}\c{s} ve anlaml{\i} \"oneriler sunmu\c{s}tur.
+
+\item \textbf{Prompt m\"uhendisli\u{g}i LLM \c{c}{\i}kt{\i} kalitesini belirler.} Ham metriklerin ve spesifik sorular{\i}n eklenmesi, \c{c}{\i}kt{\i} derinli\u{g}ini \"onemli \"ol\c{c}\"ude art{\i}rm{\i}\c{s}t{\i}r.
+\end{enumerate}
+
+Gelecek \c{c}al{\i}\c{s}malar: (i) v3.1--v3.7 s\"ur\"umlerinin analizi, (ii) en y\"uksek CBO/LCOM s{\i}n{\i}flar{\i}n{\i}n tekil analizi, (iii) Designite/SonarQube ile \c{c}apraz do\u{g}rulama, (iv) LLM'lere kaynak kod verilerek spesifik refactoring \"onerileri, (v) ba\c{s}ka bir a\c{c}{\i}k kaynak projeyle kar\c{s}{\i}la\c{s}t{\i}rma, (vi) SQALE modeli ile teknik bor\c{c} tahmini.
+
+%==============================================================
+\bibliographystyle{IEEEtran}
+
+\begin{thebibliography}{14}
+
+\bibitem{lehman1996}
+M.~M. Lehman, ``Laws of software evolution revisited,'' in \emph{Proc. 5th European Workshop on Software Process Technology (EWSPT)}, 1996, pp. 108--124.
+
+\bibitem{bansiya2002}
+J.~Bansiya and C.~G. Davis, ``A hierarchical model for object-oriented design quality assessment,'' \emph{IEEE Trans. Softw. Eng.}, vol.~28, no.~1, pp. 4--17, Jan. 2002.
+
+\bibitem{fan2023}
+A.~Fan \emph{et~al.}, ``Large language models for software engineering: Survey and open problems,'' \emph{arXiv preprint arXiv:2310.03533}, 2023.
+
+\bibitem{iso9126}
+ISO/IEC 9126-1:2001, ``Software engineering --- Product quality --- Part 1: Quality model,'' International Organization for Standardization, 2001.
+
+\bibitem{chidamber1994}
+S.~R. Chidamber and C.~F. Kemerer, ``A metrics suite for object-oriented design,'' \emph{IEEE Trans. Softw. Eng.}, vol.~20, no.~6, pp. 476--493, Jun. 1994.
+
+\bibitem{cunningham1992}
+W.~Cunningham, ``The WyCash portfolio management system,'' in \emph{Proc. OOPSLA '92 Experience Report}, 1992.
+
+\bibitem{hou2024}
+X.~Hou \emph{et~al.}, ``Large language models for software engineering: A systematic literature review,'' \emph{ACM Trans. Softw. Eng. Methodol.}, vol.~33, no.~8, pp. 1--79, 2024.
+
+\bibitem{aldallal2013}
+J.~Al~Dallal, ``Object-oriented class maintainability prediction using internal quality attributes,'' \emph{Inf. Softw. Technol.}, vol.~55, no.~11, pp. 2028--2048, 2013.
+
+\bibitem{padhy2018}
+N.~Padhy, S.~Satapathy, and R.~P. Singh, ``State-of-the-art object-oriented metrics and its reusability: A decade review,'' in \emph{Smart Computing and Informatics}, Springer, 2018, pp. 431--441.
+
+\bibitem{singh2022}
+G.~Singh and R.~Malhotra, ``An empirical investigation of the effect of object-oriented design metrics on quality,'' \emph{Softw. Qual. J.}, vol.~30, no.~4, pp. 983--1012, 2022.
+
+\bibitem{aniche2015}
+M.~Aniche, ``CK: Calculate Chidamber and Kemerer and many other metrics for Java projects,'' GitHub, 2015. [Online]. Available: \url{https://github.com/mauricioaniche/ck}
+
+\bibitem{martin2003}
+R.~C. Martin, \emph{Agile Software Development, Principles, Patterns, and Practices}. Upper Saddle River, NJ: Prentice Hall, 2003.
+
+\bibitem{fowler2018}
+M.~Fowler, \emph{Refactoring: Improving the Design of Existing Code}, 2nd~ed. Boston, MA: Addison-Wesley, 2018.
+
+\bibitem{opensearch2024}
+OpenSearch Project, ``anomaly-detection,'' GitHub, 2024. [Online]. Available: \url{https://github.com/opensearch-project/anomaly-detection}
+
+\end{thebibliography}
+
+\end{document}
