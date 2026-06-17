@@ -86,14 +86,14 @@
   - [x] 7. Sonuç ve Gelecek Çalışmalar
 - [x] Kullanılan tüm kaynakları referans göster (14 IEEE formatında referans)
 - [x] Sunum dosyasını hazırla → `sunum.pptx` (8 slayt, konuşmacı notlarıyla, ~5.5 dk)
-- [ ] GitHub deposunu düzenle: analiz kodları, promptlar, grafikler, README
+- [x] GitHub deposunu düzenle: analiz kodları, promptlar, grafikler, README
 - [x] Teslim çıktıları:
   - [x] Teknik rapor: `rapor.md` + `rapor.tex` + `rapor.pdf` (IEEE iki sütunlu format)
   - [x] Sunum: `sunum.pptx`
   - [x] Analiz kodları: `extract_metrics.sh`, `qmood_analysis.py`, `create_presentation.py`
   - [x] Promptlar: `llm_prompt.txt`
   - [x] Grafikler: `results/` dizininde 6 PNG
-  - [ ] GitHub bağlantısı
+  - [x] GitHub bağlantısı: https://github.com/overwatch144/qmood-analysis-opensearch
 
 ---
 
